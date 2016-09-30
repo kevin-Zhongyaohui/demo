@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<project name="Javascript compress project" basedir="." default="LufyCompile">
+    <taskdef name="CompressionPNG" classname="org.flash2x.CompressionPNG" classpath="${basedir}/tools/flash2x.jar"/>
+    <taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask"
+             classpath="${basedir}/tools/compiler.jar"/>
+    <target name="LufyCompile">
+        <delete dir="${basedir}/released"/>
+        <copy toDir="${basedir}/released/">
+            <fileset dir="${basedir}">
+                <exclude name="build.xml" />
+                <exclude name="tools/" />
+                <exclude name=".*/"/>
+                <exclude name="src/"/>
+            </fileset>
+        </copy>
+        <!-- 先替换掉空拍及换行-->
+        <replaceregexp encoding="utf-8" flags="g"  byline="false">
+            <regexp pattern='[\s\r\n\t]+'/>
+            <substitution expression="" />
+            <fileSet dir="${basedir}/released">
+                <include name="resource/*/*.res.json"/>
+            </fileSet>
+        </replaceregexp>
+        <!-- 再来将合并后多于的js文件引用去掉-->
+        <replaceregexp encoding="utf-8" flags="g"  byline="true">
+            <regexp pattern='\{"path".+?"type":"js"\},'/>
+            <substitution expression="" />
+            <fileSet dir="${basedir}/released">
+                <include name="resource/*/*.res.json"/>
+            </fileSet>
+        </replaceregexp>
+        <CompressionPNG binPath="${basedir}/tools/pngquant" params="--ext=.png --force">
+            <fileSet dir="${basedir}/released">
+                <include name="resource/**/*.png"/>
+            </fileSet>
+        </CompressionPNG>
+        <jscomp compilationLevel="simple" warning="quiet"
+                debug="false" output="${basedir}/released/src/Main.js">
+            <sources dir="${basedir}/src">
+                <file name="Main.js"/>
+            </sources>
+        </jscomp>
+    	<jscomp compilationLevel="simple" warning="quiet" debug="false" output="${basedir}/released/src/test/Test.js">
+			<sources dir="${basedir}/src">
+				<!--need_package_test-->
+				<file name="test/testAuto.js"/>
+				<file name="test/Test.js"/>
+			</sources>
+		</jscomp>
+	</target>
+</project>
